@@ -1,0 +1,20 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<Devices 
+	xmlns="http://vuomokki.dyndns.tv/mcuschemas">
+	<Device>
+		<deviceId>HUM_TEM_SENSOR_1</deviceId>
+		<type>TEMPERATURE_HUMIDITY_SENSOR</type>
+		<mcuBoardId>0</mcuBoardId>
+		<mcuBus>BUS_TWIM3</mcuBus>
+		<deviceInfo>Honeywell HIH-8120</deviceInfo>
+		<description>Keittiön kosteus/lämpötila</description>
+	</Device>
+	<Device>
+		<deviceId>MOTION_DETECTOR_1</deviceId>
+		<type>MOTION_DETECTOR</type>
+		<mcuBoardId>0</mcuBoardId>
+		<mcuBus>GPIO_EXT2_5</mcuBus>
+		<deviceInfo>MotionD - Masterpiece</deviceInfo>
+		<description>Liiketunnistin - Terassi</description>
+	</Device>
+</Devices>

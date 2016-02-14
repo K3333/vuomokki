@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" targetNamespace="http://vuomokki.dyndns.tv/mcuschemas" xmlns:tns="http://vuomokki.dyndns.tv/mcuchema" elementFormDefault="qualified" xmlns:Q1="http://vuomokki.dyndns.tv/mcuschemas">
+
+
+    <xs:complexType name="Device">
+    	<xs:sequence>
+    		<xs:element name="type" type="xs:string"></xs:element>
+    		<xs:element name="deviceId" type="xs:string"></xs:element>
+    		<xs:element name="mcuBoardId" type="xs:string"></xs:element>
+    		<xs:element name="mcuBus" type="xs:string"></xs:element>
+    		<xs:element name="deviceInfo" type="xs:string" maxOccurs="1" minOccurs="0"></xs:element>
+    		<xs:element name="description" type="xs:string" maxOccurs="1" minOccurs="0"></xs:element>
+    	</xs:sequence>
+    </xs:complexType>
+
+
+    <xs:element name="Devices">
+    	<xs:complexType>
+    		<xs:sequence>
+    			<xs:element name="Device" type="Q1:Device" maxOccurs="unbounded" minOccurs="0"/>
+    		</xs:sequence>
+    	</xs:complexType>
+    </xs:element>
+</xs:schema>
