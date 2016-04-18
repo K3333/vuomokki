@@ -10,4 +10,9 @@ public class DefaultRequestData extends MCUData
 	{
 		super(dataType, deviceType, sourceBus);
 	}
+
+	public static MCUData getDefautReadRequest(MCUDevice mcuDevice)
+	{
+		return new DefaultRequestData(ActionType.COMMAND_REQUEST, mcuDevice.getDeviceType(), mcuDevice.getSourceBus());
+	}
 }

@@ -5,9 +5,13 @@ import huju.mcu.datatypes.MCUData;
 import huju.mcu.datatypes.MCUDevice;
 import huju.mcu.device.DeviceId;
 import huju.mcu.comm.CommunicationDataListener;
+import huju.mcu.service.MCUDataFilter;
+import java.io.Reader;
 
 public interface MCUDataService 
 {	
+	public void setDeviceConfig(Reader configXml);
+	
 	public MCUDevice getDevice(DeviceId id) throws DeviceConfigException;
 	
 	public MCUDevice[] getDevices() throws DeviceConfigException;;
@@ -24,4 +28,8 @@ public interface MCUDataService
 	public void addServiceListener(ServiceListener listener);
 	
 	public void removeServiceListener(ServiceListener listener);
+	
+	public void addDataFilter(MCUDataFilter filter);
+	
+	public void removeDataFilter(MCUDataFilter filter);
 }

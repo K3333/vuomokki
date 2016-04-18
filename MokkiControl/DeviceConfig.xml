@@ -8,6 +8,14 @@
 		<mcuBus>BUS_TWIM3</mcuBus>
 		<deviceInfo>Honeywell HIH-8120</deviceInfo>
 		<description>Keittiön kosteus/lämpötila</description>
+		<DisplayData>
+			<DisplayElement type="string" duration="1500">SISA</DisplayElement>
+			<DisplayElement type="double" duration="4000">@temperature</DisplayElement>
+			<DisplayElement type="string" duration="2000">  °C</DisplayElement>
+			<DisplayElement type="double" duration="4000">@humidity</DisplayElement>
+			<DisplayElement type="string" duration="2000"> oI°</DisplayElement>
+		</DisplayData>
+		<DataUpdate dbStoreInterval="900000" cacheUpdatateInterval="5000">true</DataUpdate>
 	</Device>
 	<Device>
 		<deviceId>MOTION_DETECTOR_1</deviceId>

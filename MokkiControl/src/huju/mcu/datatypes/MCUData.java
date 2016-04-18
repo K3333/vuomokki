@@ -7,149 +7,119 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Basic class for all data types.
- * 
+ * Base class for all data types.
+ *
  */
-public abstract class MCUData 
+public abstract class MCUData
 {
+
 	private ActionType dataType;
 	private int referenceId;
 	private DeviceType deviceType;
 	private SourceBus sourceBus;
-        private static String receiveBuffer = null;
-	
+	private static String receiveBuffer = null;
+
 	public MCUData()
 	{
-		
+
 	}
+
 	public MCUData(ActionType dataType, DeviceType deviceType, SourceBus sourceBus)
 	{
 		this.dataType = dataType;
 		this.deviceType = deviceType;
 		this.sourceBus = sourceBus;
 	}
-	
-	public ActionType getDataType() {
+
+	public ActionType getDataType()
+	{
 		return dataType;
 	}
 
-	public void setDataType(ActionType dataType) {
+	public void setDataType(ActionType dataType)
+	{
 		this.dataType = dataType;
 	}
-	
-	public int getReferenceId() {
+
+	public int getReferenceId()
+	{
 		return referenceId;
 	}
 
-	public void setReferenceId(int referenceId) {
+	public void setReferenceId(int referenceId)
+	{
 		this.referenceId = referenceId;
 	}
-	
-	public DeviceType getDeviceType() {
+
+	public DeviceType getDeviceType()
+	{
 		return deviceType;
 	}
 
-	public void setDeviceType(DeviceType deviceType) {
+	public void setDeviceType(DeviceType deviceType)
+	{
 		this.deviceType = deviceType;
 	}
 
-	public SourceBus getSourceBus() {
+	public SourceBus getSourceBus()
+	{
 		return sourceBus;
 	}
 
-	public void setSourceBus(SourceBus sourceBus) {
+	public void setSourceBus(SourceBus sourceBus)
+	{
 		this.sourceBus = sourceBus;
 	}
-	
+
 	public static List<MCUData> constuctData(String dataLine) throws InvalidDataFormatException
 	{
-                if (dataLine==null || dataLine.length()==0) {
-                    return null;
-                }
-                StringBuffer buf = new StringBuffer();
-                if (receiveBuffer!=null && receiveBuffer.length()>0) {
-                    buf = buf.append(receiveBuffer);
-                }
-                buf = buf.append(dataLine);
-                int offset = 0;
-                int pos = 0;
-                List<String> lines = new ArrayList<String>();
-                while (pos<buf.length() && 
-                        (offset = buf.indexOf("\r\n",pos)) > 0) {
-                    lines.add(buf.substring(pos, offset));
-                    pos = offset+2;
-                }
-                if (pos<buf.length()) {
-                    receiveBuffer = buf.substring(pos);
-                } else {
-                    receiveBuffer = null;
-                }
-                List<MCUData> datas = new ArrayList<MCUData>();
-                for (String line : lines) {
-                    String[] args = line.split("[\t\\r\\n]"); 
-                    if (args.length<3) {
-                        System.out.println("Corrupted data: ["+line+"]");
-                        continue;
-                    }
-                    String strType =  args[1];
-                    if (strType!=null) {
-                        try {
-                            int dataType = Integer.parseInt(strType.trim());
-                            if (dataType == DeviceType.TEMPERATURE_HUMIDITY_SENSOR.getDeviceTypeCode()) 
-                            {
-                                    datas.add(HumidityTemperature.construct(args));
-                                    continue;
-                            } 
-                            if ((dataType == DeviceType.MOTION_DETECTOR.getDeviceTypeCode())) 
-                            {
-                                    datas.add(MotionDetect.construct(args));
-                                    continue;
-                            }
-                        } catch (NumberFormatException e) {
-			// TODO Auto-generated catch block
-                            System.out.printf("Failed to parse [%s]! %s", line, e.getMessage());
-                            continue;
-                        } 
-                    }
-                }
-                return datas;
-                /*
-         
-		String[] args = dataLine.split("[\t\\r\\n]"); 
-		if (args.length<3) {
-			throw new InvalidDataFormatException("Corruped ");
+		if (dataLine == null || dataLine.length() == 0) {
+			return null;
 		}
-		try {
-			String strType =  args[1];
-                        if (strType!=null) {
-                            int dataType = Integer.parseInt(strType.trim());
-                            if (dataType == DeviceType.TEMPERATURE_HUMIDITY_SENSOR.getDeviceTypeCode()) 
-                            {
-                                    return HumidityTemperature.construct(args);
-                            } 
-                            if ((dataType == DeviceType.MOTION_DETECTOR.getDeviceTypeCode())) 
-                            {
-                                    return MotionDetect.construct(args);
-                            }
-                        }
-
-		} catch (NumberFormatException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-			throw new InvalidDataFormatException("["+dataLine+"] corrupted argument: \'"+args[1]+"\'");
-		} 
-		
-		return new MCUData() {
-
-			@Override
-			public String toString() {
-				// TODO Auto-generated method stub
-				return "Corrucpted or Unsupported data: "+ dataLine;
+		StringBuffer buf = new StringBuffer();
+		if (receiveBuffer != null && receiveBuffer.length() > 0) {
+			buf = buf.append(receiveBuffer);
+		}
+		buf = buf.append(dataLine);
+		int offset = 0;
+		int pos = 0;
+		List<String> lines = new ArrayList<String>();
+		while (pos < buf.length()
+			&& (offset = buf.indexOf("\r\n", pos)) > 0) {
+			lines.add(buf.substring(pos, offset));
+			pos = offset + 2;
+		}
+		if (pos < buf.length()) {
+			receiveBuffer = buf.substring(pos);
+		} else {
+			receiveBuffer = null;
+		}
+		List<MCUData> datas = new ArrayList<MCUData>();
+		for (String line : lines) {
+			String[] args = line.split("[\t\\r\\n]");
+			if (args.length < 3) {
+				System.out.println("Corrupted data: [" + line + "]");
+				continue;
 			}
-			
-		};
-*/
-		
+			String strType = args[1];
+			if (strType != null) {
+				try {
+					int dataType = Integer.parseInt(strType.trim());
+					if (dataType == DeviceType.TEMPERATURE_HUMIDITY_SENSOR.getDeviceTypeCode()) {
+						datas.add(HumidityTemperature.construct(args));
+						continue;
+					}
+					if ((dataType == DeviceType.MOTION_DETECTOR.getDeviceTypeCode())) {
+						datas.add(MotionDetect.construct(args));
+						continue;
+					}
+				} catch (NumberFormatException e) {
+					// TODO Auto-generated catch block
+					System.out.printf("Failed to parse [%s]! %s", line, e.getMessage());
+					continue;
+				}
+			}
+		}
+		return datas;
 	}
-	
 }

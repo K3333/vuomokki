@@ -4,6 +4,8 @@ import huju.mcu.device.ActionType;
 import huju.mcu.device.DeviceId;
 import huju.mcu.device.DeviceType;
 import huju.mcu.device.SourceBus;
+import huju.mcu.schemas.DisplayElement;
+import java.util.List;
 
 /**
  * Wrapper to device configured in DeviceConfig xml file. 
@@ -18,6 +20,10 @@ public class MCUDevice
 	private SourceBus sourceBus;
 	private String deviceInfo;
 	private String description; 
+	private long dataStoreInterval = -1;
+	private long cacheUpdateInterval = -1;
+	
+	private List<DisplayElement> displayData;
 	
 	public int getMcuMaster() 
 	{
@@ -56,10 +62,54 @@ public class MCUDevice
 	public void setDescription(String description) {
 		this.description = description;
 	}
-	
-	public MCUData getDefautReadRequest() 
+
+	/**
+	 * @return the displayData
+	 */
+	public List<DisplayElement> getDisplayData()
 	{
-		return new DefaultRequestData(ActionType.COMMAND_REQUEST, deviceType, sourceBus);
+		return displayData;
 	}
+
+	/**
+	 * @param displayData the displayData to set
+	 */
+	public void setDisplayData(List<DisplayElement> displayData)
+	{
+		this.displayData = displayData;
+	}
+
+	/**
+	 * @return the dataStoreInterval
+	 */
+	public long getDataStoreInterval()
+	{
+		return dataStoreInterval;
+	}
+
+	/**
+	 * @param dataStoreInterval the dataStoreInterval to set
+	 */
+	public void setDataStoreInterval(long dataStoreInterval)
+	{
+		this.dataStoreInterval = dataStoreInterval;
+	}
+
+	/**
+	 * @return the cacheUpdateInterval
+	 */
+	public long getCacheUpdateInterval()
+	{
+		return cacheUpdateInterval;
+	}
+
+	/**
+	 * @param cacheUpdateInterval the cacheUpdateInterval to set
+	 */
+	public void setCacheUpdateInterval(long cacheUpdateInterval)
+	{
+		this.cacheUpdateInterval = cacheUpdateInterval;
+	}
+	
 	
 }

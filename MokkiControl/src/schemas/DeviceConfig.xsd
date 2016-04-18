@@ -1,6 +1,28 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" targetNamespace="http://vuomokki.dyndns.tv/mcuschemas" xmlns:tns="http://vuomokki.dyndns.tv/mcuchema" elementFormDefault="qualified" xmlns:Q1="http://vuomokki.dyndns.tv/mcuschemas">
-
+	<xs:complexType name="DisplayElement">
+		<xs:simpleContent>
+				<xs:extension base="xs:string">
+					<xs:attribute name="type" type="xs:string"></xs:attribute>
+					<xs:attribute name="duration" type="xs:string"></xs:attribute>
+				</xs:extension>
+		</xs:simpleContent>
+	</xs:complexType>
+	
+	<xs:complexType name="DisplayData">
+		<xs:sequence>
+			<xs:element name="DisplayElement" type="Q1:DisplayElement" maxOccurs="unbounded" minOccurs="1"></xs:element>
+		</xs:sequence>
+	</xs:complexType>
+	
+	<xs:complexType name="DataUpdate">
+		<xs:simpleContent>
+				<xs:extension base="xs:boolean">
+					<xs:attribute name="dbStoreInterval" type="xs:integer"></xs:attribute>
+					<xs:attribute name="cacheUpdatateInterval" type="xs:integer"></xs:attribute>
+				</xs:extension>
+		</xs:simpleContent>
+	</xs:complexType>
 
     <xs:complexType name="Device">
     	<xs:sequence>
@@ -10,10 +32,11 @@
     		<xs:element name="mcuBus" type="xs:string"></xs:element>
     		<xs:element name="deviceInfo" type="xs:string" maxOccurs="1" minOccurs="0"></xs:element>
     		<xs:element name="description" type="xs:string" maxOccurs="1" minOccurs="0"></xs:element>
+			<xs:element name="DisplayData" type="Q1:DisplayData" maxOccurs="1" minOccurs="0"></xs:element>
+			<xs:element name="DataUpdate" type="Q1:DataUpdate" maxOccurs="1" minOccurs="0"></xs:element>
     	</xs:sequence>
     </xs:complexType>
-
-
+    
     <xs:element name="Devices">
     	<xs:complexType>
     		<xs:sequence>
@@ -21,4 +44,5 @@
     		</xs:sequence>
     	</xs:complexType>
     </xs:element>
+    
 </xs:schema>

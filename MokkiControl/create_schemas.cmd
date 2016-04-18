@@ -1,0 +1,1 @@
+xjc -d src -p huju.mcu.schemas src\schemas\DeviceConfig.xsd

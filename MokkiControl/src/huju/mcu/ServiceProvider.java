@@ -20,7 +20,6 @@ public class ServiceProvider
 				System.out.println("Serial port opened successfully");
 			} else {
 				System.out.println("Failed to open comm!");
-				return null;
 			}
 			dataService = new MCUDataServiceImpl(comm);
 		}

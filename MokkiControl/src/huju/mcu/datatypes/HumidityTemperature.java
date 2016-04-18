@@ -6,12 +6,13 @@ import huju.mcu.device.SourceBus;
 
 public class HumidityTemperature extends MCUData
 {
-        private static final int STATUS_ERROR = -1;
-        private static final int STATUS_SUCCESS = 1;
+	private static final int STATUS_ERROR = -1;
+	private static final int STATUS_SUCCESS = 1;
         
 	private int status;
 	private double temperature;
 	private double humidity;
+	private long timestamp;
 	public int getStatus() {
 		return status;
 	}
@@ -48,6 +49,7 @@ public class HumidityTemperature extends MCUData
 		ht.setStatus(args[3]!=null ? Integer.parseInt( args[3]) : HumidityTemperature.STATUS_ERROR);
 		ht.setHumidity(args[4]!=null ? Double.parseDouble(args[4]) : Double.NaN);
 		ht.setTemperature(args[5]!=null ? Double.parseDouble(args[5]) : Double.NaN);
+		ht.setTimestamp(System.currentTimeMillis());
 		return ht;
 	}
 	
@@ -59,6 +61,22 @@ public class HumidityTemperature extends MCUData
 				" | status: "+ getStatus() + 
 				" humidity:" + getHumidity() +
 				" temperature:" + getTemperature();
+	}
+
+	/**
+	 * @return the timestamp
+	 */
+	public long getTimestamp()
+	{
+		return timestamp;
+	}
+
+	/**
+	 * @param timestamp the timestamp to set
+	 */
+	public void setTimestamp(long timestamp)
+	{
+		this.timestamp = timestamp;
 	}
 
 }
