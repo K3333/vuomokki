@@ -86,7 +86,7 @@ public class DisplayServlet extends HttpServlet implements Runnable
 				Logger.getLogger(DisplayServlet.class.getName()).log(Level.SEVERE, null, ex);
 			}
 		}
-		display.shutdown();
+		//display.shutdown();
 	}
 	
 	public void setDisplayData(DisplayData data) {
@@ -95,6 +95,7 @@ public class DisplayServlet extends HttpServlet implements Runnable
 	
 	public void destroy() {
 		stopped = true;
+		display.shutdown();
 	}
 	/**
 	 * Processes requests for both HTTP <code>GET</code> and <code>POST</code>

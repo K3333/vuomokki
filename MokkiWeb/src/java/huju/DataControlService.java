@@ -6,6 +6,7 @@
 package huju;
 
 
+import huju.db.MokkiDB;
 import huju.mcu.DeviceConfigException;
 import huju.mcu.DeviceNotFoundException;
 import huju.mcu.MCUDataService;
@@ -28,6 +29,8 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.servlet.ServletContext;
@@ -50,7 +53,9 @@ public class DataControlService extends HttpServlet
 	private Method mDisplay = null;
 	private Object display;
 	private Hashtable<DeviceId,MCUData> dataCache = new Hashtable<DeviceId,MCUData>();
+	private List<DataFetcher> dataUpdaters = new ArrayList<DataFetcher>();
 	private DisplayUpdateThread displayHandler;
+	private MokkiDB database; 
 	
 	public void init() throws ServletException
     {
@@ -66,14 +71,32 @@ public class DataControlService extends HttpServlet
 		}
 		displayHandler = new DisplayUpdateThread();
 		displayHandler.start();
+		database = new MokkiDB();
+		initDevices();
     }
+	
+	private void initDevices() {
+		MCUDevice[] devices = getDevices();
+		for (MCUDevice device : devices) {
+			long dsi = device.getDataStoreInterval();
+			long cui = device.getCacheUpdateInterval();
+			if (dsi>=0|| cui>=0) {
+				if (dsi>0 && cui>dsi) {
+					cui = dsi;
+				} else if (cui<-1) {
+					cui = dsi;
+				}
+				DataFetcher d = new DataFetcher(device, 2000, cui, dsi);
+				dataUpdaters.add(d);
+			}
+		}
+	}
 	
 	public MCUDevice[] getDevices() 
 	{
 		if (devices == null) {
 			try {
 				devices = dataService.getDevices();
-				System.out.println("DCS ->DEVICE COUNT: "+devices.length);
 			} catch (DeviceConfigException ex) {
 				Logger.getLogger(DataControlService.class.getName()).log(Level.SEVERE, null, ex);
 			}
@@ -100,7 +123,11 @@ public class DataControlService extends HttpServlet
 	
 	public void destroy() {
 		//dataService.
-		displayHandler.terminate();
+		if (displayHandler!=null) {
+			displayHandler.terminate();
+		}
+		dataCache.clear();
+
 	}
 	/*
 	private void updateSegmentDisplay(HumidityTemperature ht)
@@ -197,26 +224,88 @@ public class DataControlService extends HttpServlet
 		} else if (display==null && mDisplay==null) {
 			ServletContext srcContext = getServletContext();
 			ServletContext trgContext = srcContext.getContext("/mokki/DisplayServlet");
-			ClassLoader targetClassloader = Thread.currentThread().getContextClassLoader();
-			try {
-				display = trgContext.getAttribute(DisplayServlet.INTANCE_ATTR);
-				if (display!=null) {
-					Class<?> clazz = targetClassloader.loadClass("huju.DisplayServlet");
-					mDisplay = clazz.getMethod("setDisplayData", DisplayData.class);
-					mDisplay.invoke(display, dd);
-				} else {
-					Logger.getLogger(DataControlService.class.getName()).log(Level.SEVERE, "No servlet instanse");
+			if (trgContext!=null) {
+				ClassLoader targetClassloader = Thread.currentThread().getContextClassLoader();
+				try {
+					display = trgContext.getAttribute(DisplayServlet.INTANCE_ATTR);
+					if (display!=null) {
+						Class<?> clazz = targetClassloader.loadClass("huju.DisplayServlet");
+						mDisplay = clazz.getMethod("setDisplayData", DisplayData.class);
+						mDisplay.invoke(display, dd);
+					} else {
+						Logger.getLogger(DataControlService.class.getName()).log(Level.SEVERE, "No servlet instanse");
+					}
+
+				} catch (Exception e) {
+					Logger.getLogger(DataControlService.class.getName()).log(Level.SEVERE, null, e);
 				}
-
-			} catch (Exception e) {
-				Logger.getLogger(DataControlService.class.getName()).log(Level.SEVERE, null, e);
-			} 		
-			finally {
-
 			}
 		}
 	}
 	
+	private void fetchAndUpdateData(MCUDevice device, boolean store, long storeInterval)
+	{
+		if (device.getDeviceType()==DeviceType.TEMPERATURE_HUMIDITY_SENSOR) {
+			HumidityTemperature humTem = readHumTemp(device);
+			if (store) {
+				database.storeHumidity(device.getDeviceId(), humTem, storeInterval);
+			}
+		}
+	}
+	
+	
+	private class DataFetcher extends TimerTask
+	{
+		private MCUDevice device;
+		private Timer timer;
+		private long tsLastExceed;
+		private long storeInterval;
+		public DataFetcher(MCUDevice device, long delay, long period, long storeInterval) 
+		{
+			this.device = device;
+			this.storeInterval = storeInterval;
+			tsLastExceed = System.currentTimeMillis();
+			timer = new Timer();
+			timer.schedule(this, delay, period);
+			
+		}
+		@Override
+		public void run()
+		{
+			Logger.getLogger(DataControlService.class.getName()).log(Level.INFO, "DataFetcher RUN...");
+			boolean storeTime = false;
+			if (storeInterval>0) {
+				long now = System.currentTimeMillis();
+				if (now-tsLastExceed>=storeInterval) {
+					tsLastExceed = tsLastExceed+storeInterval;
+					storeTime = true;
+				}
+			}
+			fetchAndUpdateData(device, storeTime, storeInterval);
+		}
+
+		/**
+		 * @return the deviceId
+		 */
+		public MCUDevice getDevice()
+		{
+			return device;
+		}
+
+		/**
+		 * @param deviceId the deviceId to set
+		 */
+		public void setDeviceId(MCUDevice device)
+		{
+			this.device = device;
+		}
+
+	}
+
+	/**
+	 * Thread that updates Device data to display based on 
+	 * device configuration.
+	 */
 	private class DisplayUpdateThread extends Thread
 	{
 		private int deviceIndex;
@@ -244,14 +333,10 @@ public class DataControlService extends HttpServlet
 			elementIndex = 0;
 			for (MCUDevice d : getDevices()) {
 				List<DisplayElement> de = d.getDisplayData();
-				Logger.getLogger(DisplayUpdateThread.class.getName()).log(Level.INFO,"Display elems in "+d.getDeviceId().toString()+" => "+((de==null) ? "null" : de.size()));
 				if (de!=null && de.size()>0) {
-					System.out.println(d.getDeviceId()+"="+de.get(deviceIndex).getType()+","+de.get(deviceIndex).getDuration()+","+de.get(deviceIndex).getValue());
-					
 					disDevs.add(d);
 				}
 			}
-			Logger.getLogger(DisplayUpdateThread.class.getName()).log(Level.INFO,"Displayable items:"+disDevs.size());
 		}
 
 
@@ -315,14 +400,12 @@ public class DataControlService extends HttpServlet
 								} else {
 									dd = new DisplayData(value.toString(),DisplayData.TYPE_STING);
 								}
-								System.out.println("DATA TO DISP:"+dd.getData());
-								
+	
 								diplayValue(dd);
 							} 
 							
 							long idleTime = 1000;
 							try {
-								System.out.println("dur:"+de.getDuration());
 								idleTime = Long.valueOf(de.getDuration());
 								if (idleTime<=0) {
 									idleTime = 1000;

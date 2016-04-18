@@ -15,4 +15,10 @@
             30
         </session-timeout>
     </session-config>
+	<resource-ref>
+		<description>Database for house automation</description>
+		<res-ref-name>jdbc/mokkidb</res-ref-name>
+		<res-type>javax.sql.DataSource</res-type>
+		<res-auth>Container</res-auth>
+	 </resource-ref>
 </web-app>
