@@ -24,5 +24,6 @@
 		<mcuBus>GPIO_EXT2_5</mcuBus>
 		<deviceInfo>MotionD - Masterpiece</deviceInfo>
 		<description>Liiketunnistin - Terassi</description>
+		<DataFilter type="single" stateOnDelay="2000"/>
 	</Device>
 </Devices>

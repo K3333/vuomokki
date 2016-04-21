@@ -24,7 +24,7 @@ import java.util.logging.Logger;
 public class TestDataService
 {
 	public TestDataService() {
-	
+	/*
 		try {
 			DisplayService ds = new DisplayService();
 			
@@ -39,20 +39,14 @@ public class TestDataService
 			//ds.displayString("-");
 			double[] data = new double[]{1.23, 12.1, 10.002, 0.22, 0.0};
 			//ds.displayDouble(12.34);
-/*
-			for (double d : data) {
-				Thread.currentThread().sleep(2000);
-				System.out.println("Show: "+d);
-				ds.displayDouble(d); 
-		
-			}
-*/
+
 	
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
+		*/
 		
-		/*
+	
 		MCUDataService service = ServiceProvider.getDataService(ServiceProvider.DEFAULT_PLATFORM);
 		
 		ServiceListener listener = new ServiceListener()
@@ -64,10 +58,19 @@ public class TestDataService
 				if (data.getDeviceType() == DeviceType.MOTION_DETECTOR) {
 					SimpleDateFormat tf = new SimpleDateFormat("dd.MM.YYYY HH:mm:ss)");
 					Date d = new Date();
-					d.setTime(((MotionDetect) data).getTimestamp());
+					d.setTime(((MotionDetect) data).getStartTime());
 					String time = tf.format(d);
+					String time2 = "null";
+					if (((MotionDetect) data).getEndTime()>0)
+					{
+						d = new Date();
+						d.setTime(((MotionDetect) data).getEndTime());
+						time2 = tf.format(d);
+					}
+					
+					
 					String onoff = ((MotionDetect) data).getPinLevel()==1 ? "ON" : "OFF";
-					System.out.printf("[%s] -> ALERT %s @%s\r\n",time, onoff, data.toString());
+					System.out.printf("[%s] -> ALERT %s @%s-%s\r\n",time, onoff, time,time2);
 				} else {
 				{
 					System.out.println("RECV -> "+data);
@@ -115,16 +118,14 @@ public class TestDataService
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} 
-*/
 			
 		
 	}
 	public static void main(String[] args)
 	{
 		// TODO Auto-generated method stub
-		//new TestDataService();
-				try {
-			DisplayService ds = new DisplayService();
+		new TestDataService();
+	
 			/*
 			for (int i = DisplayService.E; i >= DisplayService.D3; i--) {
 			//for (int i = DisplayService.D4; i <= DisplayService.F; i++) {
@@ -133,7 +134,9 @@ public class TestDataService
 			}
 			ds.shutdown();
 			*/
-			
+			/*
+		try {
+			DisplayService ds = new DisplayService();
 			//ds.displayString("-");
 			double[] data = new double[]{1234, 1.23, 12.1, 10.002, 0.22, 0.0};
 			//ds.displayDouble(12.34);
@@ -181,6 +184,7 @@ public class TestDataService
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
+				*/
 	}
 
 }

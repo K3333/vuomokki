@@ -23,6 +23,15 @@
 				</xs:extension>
 		</xs:simpleContent>
 	</xs:complexType>
+	
+	<xs:complexType name="DataFilter">
+		<xs:simpleContent>
+			<xs:extension base="xs:string">
+				<xs:attribute name="stateOnDelay" type="xs:integer"></xs:attribute>
+				<xs:attribute name="type" type="xs:string"></xs:attribute>
+			</xs:extension>
+		</xs:simpleContent>
+	</xs:complexType>
 
     <xs:complexType name="Device">
     	<xs:sequence>
@@ -34,6 +43,7 @@
     		<xs:element name="description" type="xs:string" maxOccurs="1" minOccurs="0"></xs:element>
 			<xs:element name="DisplayData" type="Q1:DisplayData" maxOccurs="1" minOccurs="0"></xs:element>
 			<xs:element name="DataUpdate" type="Q1:DataUpdate" maxOccurs="1" minOccurs="0"></xs:element>
+			<xs:element name="DataFilter" type="Q1:DataFilter" maxOccurs="1" minOccurs="0"></xs:element>
     	</xs:sequence>
     </xs:complexType>
     

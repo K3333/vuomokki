@@ -18,7 +18,7 @@ public interface MCUDataService
 	
 	public void sendData(DeviceId id, MCUData request) throws DeviceNotFoundException;
 	
-        /**
+    /**
 	 * Read e device data synchronously.
 	 * @param device
 	 * @return
@@ -28,6 +28,8 @@ public interface MCUDataService
 	public void addServiceListener(ServiceListener listener);
 	
 	public void removeServiceListener(ServiceListener listener);
+	
+	public void removeAllFilters();
 	
 	public void addDataFilter(MCUDataFilter filter);
 	

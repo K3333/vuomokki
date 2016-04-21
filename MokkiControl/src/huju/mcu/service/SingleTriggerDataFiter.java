@@ -109,7 +109,7 @@ public class SingleTriggerDataFiter implements MCUDataFilter
 				currentState = 0;
 				lastEvent.setPinLevel(currentState);
 				if (deviceType==DeviceType.MOTION_DETECTOR) {
-					((MotionDetect) lastEvent).setTimestamp(timenow);
+					((MotionDetect) lastEvent).setEndTime(lastEventTime);
 				}
 				serviceListener.dataReceived(lastEvent);
 				return;

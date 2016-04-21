@@ -27,7 +27,6 @@ import huju.mcu.device.DeviceType;
 import huju.mcu.device.SourceBus;
 import huju.mcu.schemas.Device;
 import huju.mcu.schemas.Devices;
-import huju.mcu.schemas.DisplayElement;
 import java.io.Reader;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -84,6 +83,11 @@ public class MCUDataServiceImpl implements MCUDataService
 	public void removeDataFilter(MCUDataFilter filter)
 	{
 		dataFilters.remove(filter);;
+	}
+	
+	public void removeAllFilters()
+	{
+		dataFilters.clear();
 	}
 
 	public void sendData(DeviceId id, MCUData request) throws DeviceNotFoundException
@@ -222,15 +226,22 @@ public class MCUDataServiceImpl implements MCUDataService
 		d.setSourceBus(bus);
 		d.setDeviceInfo(device.getDeviceInfo());
 		d.setDescription(device.getDescription());
+		// Display update values
 		if (device.getDisplayData()!=null) {
 			d.setDisplayData(device.getDisplayData().getDisplayElement());
 		}
+		// Data (db/cache) store times
 		if (device.getDataUpdate()!=null ) {
 			if (device.getDataUpdate().getDbStoreInterval()!=null) {
 				d.setDataStoreInterval(device.getDataUpdate().getDbStoreInterval().longValue());
 			}
 			if (device.getDataUpdate().getCacheUpdatateInterval()!=null) {
 				d.setCacheUpdateInterval(device.getDataUpdate().getCacheUpdatateInterval().intValue());
+			}
+		}
+		if (device.getDataFilter() != null) {
+			if (device.getDataFilter().getStateOnDelay()!=null) {
+				d.setSingleTriggerDelay(device.getDataFilter().getStateOnDelay().longValue());
 			}
 		}
 		return d;

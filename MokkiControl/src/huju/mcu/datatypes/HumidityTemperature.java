@@ -6,8 +6,8 @@ import huju.mcu.device.SourceBus;
 
 public class HumidityTemperature extends MCUData
 {
-	private static final int STATUS_ERROR = -1;
-	private static final int STATUS_SUCCESS = 1;
+	public static final int STATUS_ERROR = -1;
+	public static final int STATUS_SUCCESS = 1;
         
 	private int status;
 	private double temperature;

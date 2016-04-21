@@ -17,16 +17,16 @@ import javax.xml.bind.annotation.XmlValue;
 
 
 /**
- * <p>Java class for DataUpdate complex type.
+ * <p>Java class for DataFilter complex type.
  * 
  * <p>The following schema fragment specifies the expected content contained within this class.
  * 
  * <pre>
- * &lt;complexType name="DataUpdate">
+ * &lt;complexType name="DataFilter">
  *   &lt;simpleContent>
- *     &lt;extension base="&lt;http://www.w3.org/2001/XMLSchema>boolean">
- *       &lt;attribute name="dbStoreInterval" type="{http://www.w3.org/2001/XMLSchema}integer" />
- *       &lt;attribute name="cacheUpdatateInterval" type="{http://www.w3.org/2001/XMLSchema}integer" />
+ *     &lt;extension base="&lt;http://www.w3.org/2001/XMLSchema>string">
+ *       &lt;attribute name="stateOnDelay" type="{http://www.w3.org/2001/XMLSchema}integer" />
+ *       &lt;attribute name="type" type="{http://www.w3.org/2001/XMLSchema}string" />
  *     &lt;/extension>
  *   &lt;/simpleContent>
  * &lt;/complexType>
@@ -35,80 +35,88 @@ import javax.xml.bind.annotation.XmlValue;
  * 
  */
 @XmlAccessorType(XmlAccessType.FIELD)
-@XmlType(name = "DataUpdate", propOrder = {
+@XmlType(name = "DataFilter", propOrder = {
     "value"
 })
-public class DataUpdate {
+public class DataFilter {
 
     @XmlValue
-    protected boolean value;
+    protected String value;
     @XmlAttribute
-    protected BigInteger dbStoreInterval;
+    protected BigInteger stateOnDelay;
     @XmlAttribute
-    protected BigInteger cacheUpdatateInterval;
+    protected String type;
 
     /**
      * Gets the value of the value property.
      * 
+     * @return
+     *     possible object is
+     *     {@link String }
+     *     
      */
-    public boolean isValue() {
+    public String getValue() {
         return value;
     }
 
     /**
      * Sets the value of the value property.
      * 
+     * @param value
+     *     allowed object is
+     *     {@link String }
+     *     
      */
-    public void setValue(boolean value) {
+    public void setValue(String value) {
         this.value = value;
     }
 
     /**
-     * Gets the value of the dbStoreInterval property.
+     * Gets the value of the stateOnDelay property.
      * 
      * @return
      *     possible object is
      *     {@link BigInteger }
      *     
      */
-    public BigInteger getDbStoreInterval() {
-        return dbStoreInterval;
+    public BigInteger getStateOnDelay() {
+        return stateOnDelay;
     }
 
     /**
-     * Sets the value of the dbStoreInterval property.
+     * Sets the value of the stateOnDelay property.
      * 
      * @param value
      *     allowed object is
      *     {@link BigInteger }
      *     
      */
-    public void setDbStoreInterval(BigInteger value) {
-        this.dbStoreInterval = value;
+    public void setStateOnDelay(BigInteger value) {
+        this.stateOnDelay = value;
     }
 
     /**
-     * Gets the value of the cacheUpdatateInterval property.
+     * Gets the value of the type property.
      * 
      * @return
      *     possible object is
-     *     {@link BigInteger }
+     *     {@link String }
      *     
      */
-    public BigInteger getCacheUpdatateInterval() {
-        return cacheUpdatateInterval;
+    public String getType() {
+        return type;
     }
 
     /**
-     * Sets the value of the cacheUpdatateInterval property.
+     * Sets the value of the type property.
      * 
      * @param value
      *     allowed object is
-     *     {@link BigInteger }
+     *     {@link String }
      *     
      */
-    public void setCacheUpdatateInterval(BigInteger value) {
-        this.cacheUpdatateInterval = value;
+    public void setType(String value) {
+        this.type = value;
     }
 
 }

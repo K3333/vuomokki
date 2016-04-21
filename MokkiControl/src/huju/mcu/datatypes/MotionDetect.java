@@ -8,7 +8,8 @@ import java.time.format.DateTimeFormatter;
 
 public class MotionDetect extends GPIOValue 
 {
-	private long timestamp;
+	private long startTime;
+	private long endTime;
 	public static MotionDetect construct(String[] args) throws InvalidDataFormatException
 	{
 	
@@ -16,7 +17,7 @@ public class MotionDetect extends GPIOValue
 			throw new InvalidDataFormatException("Expected 4 arguments, got: "+args.length);
 		}
 		MotionDetect md = new MotionDetect();
-		md.setTimestamp(System.currentTimeMillis());
+		md.setStartTime(System.currentTimeMillis());
 		md.setDataType(ActionType.getActionType(Integer.parseInt(args[0])));
 		md.setDeviceType(DeviceType.getDeviceType(Integer.parseInt(args[1])));
 		md.setSourceBus(SourceBus.getSourceBus(Integer.parseInt(args[2])));
@@ -25,19 +26,35 @@ public class MotionDetect extends GPIOValue
 	}
 
 	/**
-	 * @return the timestamp
+	 * @return the startTime
 	 */
-	public long getTimestamp()
+	public long getStartTime()
 	{
-		return timestamp;
+		return startTime;
 	}
 
 	/**
-	 * @param timestamp the timestamp to set
+	 * @param startTime the startTime to set
 	 */
-	public void setTimestamp(long timestamp)
+	public void setStartTime(long startTime)
 	{
-		this.timestamp = timestamp;
+		this.startTime = startTime;
+	}
+
+	/**
+	 * @return the endTime
+	 */
+	public long getEndTime()
+	{
+		return endTime;
+	}
+
+	/**
+	 * @param endTime the endTime to set
+	 */
+	public void setEndTime(long endTime)
+	{
+		this.endTime = endTime;
 	}
 
 }

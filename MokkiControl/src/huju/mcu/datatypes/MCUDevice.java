@@ -22,6 +22,7 @@ public class MCUDevice
 	private String description; 
 	private long dataStoreInterval = -1;
 	private long cacheUpdateInterval = -1;
+	private long singleTriggerDelay = -1;
 	
 	private List<DisplayElement> displayData;
 	
@@ -109,6 +110,22 @@ public class MCUDevice
 	public void setCacheUpdateInterval(long cacheUpdateInterval)
 	{
 		this.cacheUpdateInterval = cacheUpdateInterval;
+	}
+
+	/**
+	 * @return the singleTriggerDelay
+	 */
+	public long getSingleTriggerDelay()
+	{
+		return singleTriggerDelay;
+	}
+
+	/**
+	 * @param singleTriggerDelay the singleTriggerDelay to set
+	 */
+	public void setSingleTriggerDelay(long singleTriggerDelay)
+	{
+		this.singleTriggerDelay = singleTriggerDelay;
 	}
 	
 	
