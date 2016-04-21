@@ -10,23 +10,30 @@ import huju.db.MokkiDB;
 import huju.mcu.DeviceConfigException;
 import huju.mcu.DeviceNotFoundException;
 import huju.mcu.MCUDataService;
+import huju.mcu.ServiceListener;
 import huju.mcu.ServiceProvider;
 import huju.mcu.datatypes.HumidityTemperature;
 import huju.mcu.datatypes.MCUData;
 import huju.mcu.datatypes.MCUDevice;
+import huju.mcu.datatypes.MotionDetect;
 import huju.mcu.datatypes.Temperature;
 import huju.mcu.device.DeviceId;
 import huju.mcu.device.DeviceType;
 import huju.mcu.schemas.DisplayElement;
 import huju.mcu.service.DisplayService;
+import huju.mcu.service.SingleTriggerDataFiter;
 import huju.web.obj.DisplayData;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
+import java.io.Writer;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
+import java.util.Enumeration;
 import java.util.Hashtable;
 import java.util.List;
 import java.util.Timer;
@@ -56,6 +63,8 @@ public class DataControlService extends HttpServlet
 	private List<DataFetcher> dataUpdaters = new ArrayList<DataFetcher>();
 	private DisplayUpdateThread displayHandler;
 	private MokkiDB database; 
+	private SimpleDateFormat format = new SimpleDateFormat("dd.MM.yyyy HH:mm:ss");
+	private Hashtable<DeviceId,MCUDataListener> dataListeners = new Hashtable<DeviceId,MCUDataListener>();
 	
 	public void init() throws ServletException
     {
@@ -89,6 +98,19 @@ public class DataControlService extends HttpServlet
 				DataFetcher d = new DataFetcher(device, 2000, cui, dsi);
 				dataUpdaters.add(d);
 			}
+			// Add data listener
+			if (device.getDeviceType()==DeviceType.MOTION_DETECTOR) {
+				MCUDataListener dataListener = new MCUDataListener(device.getDeviceId());
+				SingleTriggerDataFiter filter = new SingleTriggerDataFiter(device, dataListener);
+				if (device.getSingleTriggerDelay()>0) {
+					filter.setStateOnTime(device.getSingleTriggerDelay());
+				} else {
+					filter.setStateOnTime(5000);
+				}
+				
+				dataService.addDataFilter(filter);
+				dataListeners.put(device.getDeviceId(), dataListener);
+			}
 		}
 	}
 	
@@ -104,6 +126,27 @@ public class DataControlService extends HttpServlet
 		return devices;
 	}
 	
+	public MotionDetect geLastMotionDetection(MCUDevice device) throws DeviceNotFoundException
+	{
+		if (device==null || device.getDeviceType()!=DeviceType.MOTION_DETECTOR) {
+			throw new DeviceNotFoundException("Device  is null or type is inproper");
+		}
+		return (MotionDetect) dataCache.get(device.getDeviceId());
+	}
+	
+	public HumidityTemperature getHumTemp(MCUDevice device) throws DeviceNotFoundException
+	{
+		if (device==null || device.getDeviceType()!=DeviceType.TEMPERATURE_HUMIDITY_SENSOR) {
+			throw new DeviceNotFoundException("Device  is null or type is inproper");
+		}
+		HumidityTemperature cached = (HumidityTemperature) dataCache.get(device.getDeviceId());
+		if (cached!=null) {
+			return cached;
+		}
+		return readHumTemp(device);
+	}
+	
+	
 	public HumidityTemperature readHumTemp(MCUDevice device)
 	{
 		MCUData data = null;
@@ -116,7 +159,10 @@ public class DataControlService extends HttpServlet
 			return null;
 		}
 		HumidityTemperature ret = (HumidityTemperature) data;
-		dataCache.put(device.getDeviceId(), ret);
+		if (ret.getStatus()!=HumidityTemperature.STATUS_ERROR) {
+			dataCache.put(device.getDeviceId(), ret);
+		}
+		
 		return ret;
 		
 	}
@@ -127,6 +173,13 @@ public class DataControlService extends HttpServlet
 			displayHandler.terminate();
 		}
 		dataCache.clear();
+		Enumeration<DeviceId> keys = dataListeners.keys();
+		while (keys.hasMoreElements()) {
+			DeviceId id = keys.nextElement();
+			MCUDataListener l = dataListeners.get(id);
+			dataService.removeServiceListener(l);
+		}
+		dataService.removeAllFilters();
 
 	}
 	/*
@@ -153,19 +206,148 @@ public class DataControlService extends HttpServlet
 	protected void processRequest(HttpServletRequest request, HttpServletResponse response)
 		throws ServletException, IOException
 	{
+		String op = (String)request.getParameter("o");
+		String deviceId = (String) request.getParameter("devid");
 		response.setContentType("text/html;charset=UTF-8");
 		try (PrintWriter out = response.getWriter()) {
 			/* TODO output your page here. You may use following sample code. */
 			out.println("<!DOCTYPE html>");
 			out.println("<html>");
 			out.println("<head>");
-			out.println("<title>Servlet DataControllService</title>");			
+			out.println("<style>");
+			out.println("table, th, td {");
+			out.println("    border: 1px solid black;");
+			out.println("}");
+			out.println("table {");
+			out.println("    border-collapse: collapse;");
+			out.println("    width: 100%;");
+			out.println("}");
+			out.println("th, td {");
+			out.println("    padding-left: 10px;");
+			out.println("    padding-right: 10px;");
+			out.println("    padding-top: 3px;");
+			out.println("    padding-bottom: 3px;");
+			out.println("}");
+			out.println("</style>");
+			out.println("<title>Mokki Data Bridge</title>");			
 			out.println("</head>");
 			out.println("<body>");
-			out.println("<h1>Servlet DataControllService at " + request.getContextPath() + "</h1>");
+			if (op!=null) {
+				if (op.equalsIgnoreCase("value") && deviceId!=null) {
+					DeviceId id  = DeviceId.getDeviceId(Integer.valueOf(deviceId));
+					MCUDevice d = null;
+					for (MCUDevice dev : getDevices()) {
+						if (dev.getDeviceId()==id) {
+							d = dev;
+							break;
+						}
+					}
+					if (d==null) {
+						out.println("<p>Invalid requests!</p>");
+					} else {
+						out.println("<h1>"+d.getDeviceType()+ " data</h1>");
+						out.println("<p>"+d.getDeviceInfo()+"</p>");
+						if (d.getDeviceType()==DeviceType.TEMPERATURE_HUMIDITY_SENSOR) {
+							out.write(getHumidityDataTable(id, -1, -1));
+						} else if (d.getDeviceType()==DeviceType.MOTION_DETECTOR) {
+							out.write(getMotionDetectionTable(id, -1, -1));
+						}
+					}
+					
+				}
+			}
+			
 			out.println("</body>");
 			out.println("</html>");
 		}
+	}
+	
+	private String getHumidityDataTable(DeviceId devId,  long start, long end) {
+		 List <HumidityTemperature> list = database.getHumidity(devId, start, end);
+		 return DataControlService.this.getHumidityDataTable(list);
+	} 
+	
+	private String getMotionDetectionTable(DeviceId devId,  long start, long end) {
+		 List <MotionDetect> list = database.getMotionDetect(devId, start, end);
+		 return DataControlService.this.getMotionDetectTable(list);
+	} 
+	
+	private String getHumidityDataTable(List <HumidityTemperature> values) 
+	{
+		StringBuffer buf = new StringBuffer();
+		buf.append("<table>\n");
+		
+		if (values==null) {
+			buf.append("<tr>");
+			buf.append("<td>");
+			buf.append("(empty)");
+			buf.append("</td>");
+			buf.append("</tr>");
+		} else {
+			buf.append("<tr>\n");
+			buf.append("<td><b>Lämpötila ("+((char) 176)+"C)</b></td>\n");
+			buf.append("<td><b>Kosteus (RH%)</b></td>\n");
+			buf.append("<td><b>Aika</b></td>\n");
+			buf.append("</tr>\n");
+			for (HumidityTemperature ht : values) {
+				buf.append("<tr>\n");
+				buf.append("<td>");
+				buf.append(ht.getTemperature());
+				buf.append("</td>\n");
+				buf.append("<td>");
+				buf.append(ht.getHumidity());
+				buf.append("</td>\n");
+				buf.append("<td>");
+				Date ts = new Date();
+				ts.setTime(ht.getTimestamp());
+				buf.append(format.format(ts));
+				buf.append("</td>\n");
+				buf.append("</tr>\n");
+			}
+		}
+		buf.append("</table>"); 
+		return buf.toString();
+
+	}
+	
+	private String getMotionDetectTable(List<MotionDetect> values) 
+	{
+		StringBuffer buf = new StringBuffer();
+		buf.append("<table>\n");
+		
+		if (values==null) {
+			buf.append("<tr>");
+			buf.append("<td>");
+			buf.append("(empty)");
+			buf.append("</td>");
+			buf.append("</tr>");
+		} else {
+			buf.append("<tr>\n");
+			buf.append("<td><b>Start time</b></td>\n");
+			buf.append("<td><b>End time</b></td>\n");
+			buf.append("<td><b>Duration</b></td>\n");
+			buf.append("</tr>\n");
+			Date date = new Date();
+			for (MotionDetect mtn : values) {
+				buf.append("<tr>\n");
+				buf.append("<td>");
+				date.setTime(mtn.getStartTime());
+				buf.append(format.format(date));
+				buf.append("</td>\n");
+				buf.append("<td>");
+				date.setTime(mtn.getEndTime());
+				buf.append(format.format(date));
+				buf.append("</td>\n");
+				buf.append("<td>");
+				long dur = (mtn.getEndTime()-mtn.getStartTime())/1000;
+				buf.append(String.format("%d s", dur));
+				buf.append("</td>\n");
+				buf.append("</tr>\n");
+			}
+		}
+		buf.append("</table>"); 
+		return buf.toString();
+
 	}
 
 	// <editor-fold defaultstate="collapsed" desc="HttpServlet methods. Click on the + sign on the left to edit the code.">
@@ -272,12 +454,11 @@ public class DataControlService extends HttpServlet
 		@Override
 		public void run()
 		{
-			Logger.getLogger(DataControlService.class.getName()).log(Level.INFO, "DataFetcher RUN...");
 			boolean storeTime = false;
 			if (storeInterval>0) {
 				long now = System.currentTimeMillis();
 				if (now-tsLastExceed>=storeInterval) {
-					tsLastExceed = tsLastExceed+storeInterval;
+					tsLastExceed = now;
 					storeTime = true;
 				}
 			}
@@ -431,6 +612,31 @@ public class DataControlService extends HttpServlet
 					}
 				}
 			}
+		}
+	}
+	
+	/**
+	 * Listener for mcu data.
+	 * Handles Motion Detection based data.
+	 */
+	class MCUDataListener implements ServiceListener
+	{
+		private DeviceId deviceId;  
+		public MCUDataListener(DeviceId id) 
+		{
+			this.deviceId = id;
+		}
+		@Override
+		public void dataReceived(MCUData data)
+		{
+			if (data.getDeviceType() == DeviceType.MOTION_DETECTOR) {
+				MotionDetect md = (MotionDetect) data;
+				dataCache.put(deviceId, md);
+				if (md.getPinLevel()==0) {
+					database.storeMotionDetect(deviceId, md);
+				} 
+				//System.out.printf("[%s] -> ALERT %s\r\n",deviceId.name(), (md.getPinLevel()==0 ? "OFF" : "ON"));
+			} 
 		}
 	}
 		

@@ -18,6 +18,7 @@ import huju.mcu.MCUDataService;
 import huju.mcu.ServiceProvider;
 import huju.mcu.datatypes.HumidityTemperature;
 import huju.mcu.datatypes.MCUDevice;
+import huju.mcu.datatypes.MotionDetect;
 import huju.mcu.device.DeviceId;
 import huju.mcu.device.DeviceType;
 import huju.web.obj.DisplayData;
@@ -26,6 +27,8 @@ import java.io.InputStreamReader;
 import java.io.StringReader;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.Enumeration;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -41,6 +44,7 @@ public class MainServlet extends HttpServlet
 {
 	private Object dataController = null;
 	Class<?> clazzDc;
+	private SimpleDateFormat dateFormat = new SimpleDateFormat("dd.MM.yyyy HH:mm:ss");
 		
 		
 	public void init() throws ServletException
@@ -60,10 +64,33 @@ public class MainServlet extends HttpServlet
 		}
 	}
 	
+	private MotionDetect getMotionDetect(MCUDevice device) {
+		if (dataController!=null && clazzDc!=null) {
+			try {
+				Method m = clazzDc.getMethod("geLastMotionDetection", MCUDevice.class);
+				Object ret = m.invoke(dataController, device);
+				return (MotionDetect) ret;
+			} catch (NoSuchMethodException ex) {
+				Logger.getLogger(MainServlet.class.getName()).log(Level.SEVERE, null, ex);
+			} catch (SecurityException ex) {
+				Logger.getLogger(MainServlet.class.getName()).log(Level.SEVERE, null, ex);
+			} catch (IllegalAccessException ex) {
+				Logger.getLogger(MainServlet.class.getName()).log(Level.SEVERE, null, ex);
+			} catch (IllegalArgumentException ex) {
+				Logger.getLogger(MainServlet.class.getName()).log(Level.SEVERE, null, ex);
+			} catch (InvocationTargetException ex) {
+				Logger.getLogger(MainServlet.class.getName()).log(Level.SEVERE, null, ex);
+			}
+		} else {
+			Logger.getLogger(MainServlet.class.getName()).log(Level.SEVERE, "No servlet instanse");
+		}
+		return null;
+	}
+	
 	private HumidityTemperature getTemperatureHumidity(MCUDevice device) {
 		if (dataController!=null && clazzDc!=null) {
 			try {
-				Method m = clazzDc.getMethod("readHumTemp", MCUDevice.class);
+				Method m = clazzDc.getMethod("getHumTemp", MCUDevice.class);
 				Object ret = m.invoke(dataController, device);
 				return (HumidityTemperature) ret;
 			} catch (NoSuchMethodException ex) {
@@ -165,7 +192,7 @@ public class MainServlet extends HttpServlet
 		}
 		*/
 
-			out.println("<h1>Servlet MainServlet at " + request.getContextPath() + "</h1>");
+			out.println("<h1>Devices</h1>");
 			out.println(getDeviceTable(getDevices()));
 			out.println("</body>");
 			out.println("</html>");
@@ -219,16 +246,27 @@ public class MainServlet extends HttpServlet
 	private String getDeviceTable(MCUDevice[] devices) 
 	{
 		StringBuffer buf = new StringBuffer();
-		buf.append("<table>\n");
+		
 		
 		if (devices==null) {
+			buf.append("<table>\n");
 			buf.append("<tr>");
 			buf.append("<td>");
 			buf.append("Virhe laitteiden luvussa!");
 			buf.append("</td>");
 			buf.append("</tr>");
+			buf.append("</table>\n");
 		} else {
+			for (MCUDevice d : devices) {
+				buf.append("<hr><h2>"+d.getDeviceType().toString()+"</h2>");
+				buf.append("<p>"+d.getDeviceId().toString());
+				buf.append("<br>"+d.getDeviceInfo());
+				buf.append("<br><b>"+d.getDescription()+"</b></p>");
+				buf.append("<h1>"+getvalue(d)+"</h1>");
+			}
+			/*
 			buf.append("<tr>\n");
+			
 			buf.append("<td><b>ID</b></td>\n");
 			buf.append("<td><b>Tyyppi</b></td>\n");
 			buf.append("<td><b>Kuvaus</b></td>\n");
@@ -249,9 +287,11 @@ public class MainServlet extends HttpServlet
 				buf.append(getvalue(d));
 				buf.append("</td>\n");
 				buf.append("</tr>\n");
+				buf.append("</table>"); 
 			}
+		*/
 		}
-		buf.append("</table>"); 
+		
 		return buf.toString();
 
 	}
@@ -261,10 +301,28 @@ public class MainServlet extends HttpServlet
 		if (d.getDeviceType() == DeviceType.TEMPERATURE_HUMIDITY_SENSOR) {
 			HumidityTemperature humTemp = getTemperatureHumidity(d);
 			if (humTemp!=null) {
-				return String.format("%3.1f %s | %3.1f %s", humTemp.getTemperature(), ((char) 248)+"C", humTemp.getHumidity(), "%");
+				return String.format("%3.1f %s | %3.1f %s", humTemp.getTemperature(), ((char) 176)+"C", humTemp.getHumidity(), "%");
+			}
+		} else if (d.getDeviceType() == DeviceType.MOTION_DETECTOR) {
+			MotionDetect motion = getMotionDetect(d);
+			if (motion!=null) {
+				Date date = new Date();
+				date.setTime(motion.getStartTime());
+				String start = dateFormat.format(date);
+				if (motion.getPinLevel()!=0) {
+					long dur = (System.currentTimeMillis()-motion.getStartTime())/1000;
+					String f = "<h1 style=\"color:red;\">!!! ALERT !!!</h1><p>  duration:%d s  Started:%s</p>";
+					return String.format(f, dur, start) ;
+				}
+				date.setTime(motion.getEndTime());
+				String end = dateFormat.format(date);
+				long dur = (motion.getEndTime()-motion.getStartTime())/1000;
+				String f = "<p>Last alert:  %s - %s (%d s)</p>";
+				return String.format(f, start, end, dur) ;
 			}
 		}
-		return "";
+		
+		return d.getDeviceType().name()+" unavailable";
 	}
 
 }
